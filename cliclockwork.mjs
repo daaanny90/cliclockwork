@@ -13,8 +13,8 @@ const CONFIG_PATH = path.join(os.homedir(), '.config/cliclockwork/settings.json'
 const program = new Command();
 
 /**
-  * Return the config file as a JSON object
-  */
+ * Return the config file as a JSON object
+ */
 async function getConfig() {
     try {
           const config = await fs.readJson(CONFIG_PATH);
@@ -25,6 +25,9 @@ async function getConfig() {
     }
 }
 
+/**
+ * Save the given data to the config file (key: value pairs) 
+ */
 async function saveConfig(newData) {
     try {
         const config = await getConfig();
@@ -36,6 +39,9 @@ async function saveConfig(newData) {
     }
  }
 
+/**
+ * Return the token, if it exists, otherwise prompt for it 
+ */
 async function getToken() {
     const config = await getConfig();
     if (config && config.token) {
@@ -56,6 +62,9 @@ async function getToken() {
     return answers.token;
 }
 
+/**
+ * Start the timer for the given Ticket 
+ */
 async function startTimer(issueKey) {
     const token = await getToken();
     try {
@@ -76,6 +85,9 @@ async function startTimer(issueKey) {
     }
 }
 
+/**
+ * Stop the current timer, if any 
+ */
 async function stopTimer() {
     const token = await getToken();
     const config = await getConfig();
@@ -103,6 +115,9 @@ async function stopTimer() {
     }
 }
 
+/**
+ * Get the current timer, if any 
+ */
 async function getCurrentTimer() {
     const config = await getConfig();
     const runningTask = config?.timer;
@@ -115,6 +130,9 @@ async function getCurrentTimer() {
     console.log(`Running timer for ticket ${runningTask}`);
 }
 
+/**
+ * Print the token, if it exists, otherwise prompt for it 
+ */
 async function authorization() {
     const token = await getToken();
     console.log(token);

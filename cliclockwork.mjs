@@ -66,6 +66,29 @@ async function getToken() {
 }
 
 /**
+ * Return the name, if it exists, otherwise prompt for it 
+ */
+async function getName() {
+  const config = await getConfig();
+  if(config && config.name) {
+    return config.name;
+  }
+
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'Please enter your name:',
+    },
+  ]);
+
+  const newConfig = {name: answers.name};
+  await saveConfig(newConfig);
+
+  return answers.name;
+}
+
+/**
  * Start the timer for the given Ticket
  */
 async function startTimer(issueKey) {
@@ -119,6 +142,56 @@ async function stopTimer() {
 }
 
 /**
+ * Create a report of the work done yesterday to help during daily meetings 
+ */
+async function getDaily() {
+  const token = await getToken();
+  const name = await getName();
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const formattedDate = yesterday.toISOString().split('T')[0];
+
+  try {
+    const response = await axios.get(
+      'https://api.clockwork.report/v1/worklogs',
+      {
+        headers: {
+          Authorization: `Token ${token}`,
+        },
+        params: {
+          starting_at: formattedDate,
+          ending_at: formattedDate,
+          expand: 'authors,issues,worklogs'
+
+        }
+      }
+    )
+
+    const filteredResponse = response.data.filter(worklog => {
+     const regex = new RegExp(name, 'i');   
+      return regex.test(worklog.author.displayName);
+    });
+
+    const reducedResponse = filteredResponse.reduce((worklog, currentWorklog) => {
+      const log = {
+        issue: currentWorklog.issue.key,
+        summary: currentWorklog.issue.fields.summary,
+        comment: currentWorklog.comment,
+        timeSpent: currentWorklog.timeSpent,
+      };
+      worklog.push(log);
+      return worklog; // Restituisci l'accumulatore per la prossima iterazione
+    }, []);
+
+    console.log(reducedResponse)
+  } catch (error) {
+    console.error('Error retrieving worklogs:', error.response);
+  }
+}
+
+/**
  * Clear current state in case of sync problems
  */
 async function reset() {
@@ -161,7 +234,7 @@ Y88b  d88P 888        888        Y88b  d88P 888 Y88..88P Y88b.    888 "88b Y88b 
 program
   .name('cliclockwork')
   .description(`${ASCII_ART}\n\nA little CLI to manage Clockwork in Jira.`)
-  .version('1.0.0');
+  .version('1.1.0');
 
 program
   .command('start <ticketName>')
@@ -179,6 +252,11 @@ program
   .command('info')
   .description('Get info if a timer is currently active.')
   .action(getCurrentTimer);
+
+program
+  .command('daily')
+  .description('Create a report of the work done yesterday to help during daily meetings.')
+  .action(getDaily);
 
 program
   .command('reset')

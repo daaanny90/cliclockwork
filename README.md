@@ -7,6 +7,7 @@ CLI Clockwork is a command-line interface (CLI) tool for managing Clockwork time
 - Start a timer for a specific Jira issue.
 - Stop the currently running timer.
 - Retrieve information about the current active timer.
+- Create a report of the work done yesterday, to help during daily meetings.
 - Save and reuse your Clockwork API token.
 
 ## Installation
@@ -105,6 +106,22 @@ Get information about the currently running timer.
 
 ```bash
 cw info
+```
+
+### Reset in case of problems
+
+Sometimes some inconsistency can happen, e.g. when you start a timer from the CLI but you stop in through the web interface.
+In this case, the timer is stopped but your CLI does not know that. You can use this command to reset the timer.
+
+```bash
+cw reset
+```
+
+### Create daily report
+Create a report of the work done yesterday, to help during daily meetings.
+
+```bash
+cw daily
 ```
 
 ### Help

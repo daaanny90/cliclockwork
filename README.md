@@ -2,12 +2,14 @@
 
 CLI Clockwork is a command-line interface (CLI) tool for managing Clockwork timers on Jira issues. It allows you to start, stop, and get information about active timers directly from your terminal using the Clockwork API for Jira time tracking.
 
+It can also generate a report to use during your daily, eventually generated with ChatGPT if you have a OpenAI API Key saved in your system.
+
 ## Features
 
 - Start a timer for a specific Jira issue.
 - Stop the currently running timer.
 - Retrieve information about the current active timer.
-- Create a report of the work done yesterday, to help during daily meetings.
+- Create a report of the work done yesterday, to help during daily meetings. (Textual if you have OpenAI API Key saved in your system, otherwise in JSON format)
 - Save and reuse your Clockwork API token.
 
 ## Installation
@@ -119,6 +121,10 @@ cw reset
 
 ### Create daily report
 Create a report of the work done yesterday, to help during daily meetings.
+
+If you have the OpenAI API Key saved in path, then the CLI will send the prompt to ChatGPT to generate a textual report in form of notes. It generate automatically the text in Markdown, so you can easily copy/paste the text where you want (or keep it in the terminal, as you want).
+
+If you are not interested in the AI capabilities and you do not have a OpenAI API key, then the CLI will just generate a JSON report.
 
 ```bash
 cw daily

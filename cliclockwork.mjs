@@ -7,6 +7,9 @@ import path from 'path';
 import os from 'os';
 import { Command } from 'commander';
 import process from 'process';
+import OpenAI from 'openai';
+
+const openai = new OpenAI();
 
 const CONFIG_PATH = path.join(
   os.homedir(),
@@ -182,11 +185,32 @@ async function getDaily() {
         timeSpent: currentWorklog.timeSpent,
       };
       worklog.push(log);
-      return worklog; // Restituisci l'accumulatore per la prossima iterazione
+      return worklog;
     }, []);
 
-    console.log(reducedResponse)
-  } catch (error) {
+    if(process.env.OPENAI_API_KEY) {
+      const gptResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible, add context if necessary: " + JSON.stringify(reducedResponse)
+              }
+            ]
+          }
+        ]
+      });
+
+      console.log(gptResponse.choices[0].message.content);
+      return;
+    }
+
+    console.table(reducedResponse);
+
+    } catch (error) {
     console.error('Error retrieving worklogs:', error.response);
   }
 }
@@ -234,7 +258,7 @@ Y88b  d88P 888        888        Y88b  d88P 888 Y88..88P Y88b.    888 "88b Y88b 
 program
   .name('cliclockwork')
   .description(`${ASCII_ART}\n\nA little CLI to manage Clockwork in Jira.`)
-  .version('1.1.0');
+  .version('1.2.0');
 
 program
   .command('start <ticketName>')

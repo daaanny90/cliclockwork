@@ -190,7 +190,7 @@ async function getDaily() {
 
     if(process.env.OPENAI_API_KEY) {
       const gptResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             "role": "user",

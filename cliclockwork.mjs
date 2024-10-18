@@ -197,7 +197,7 @@ async function getDaily() {
             "content": [
               {
                 "type": "text",
-                "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible, add context if necessary: " + JSON.stringify(reducedResponse)
+                "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible and keep the original tile of tickets. Add context if necessary: " + JSON.stringify(reducedResponse)
               }
             ]
           }

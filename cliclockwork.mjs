@@ -151,11 +151,16 @@ async function getDaily() {
   const token = await getToken();
   const name = await getName();
 
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
+  const today = new Date();
+  let reportDate = new Date(today);
 
-  const formattedDate = yesterday.toISOString().split('T')[0];
+  if (today.getDay() === 1) {
+    reportDate.setDate(today.getDate() - 3);
+  } else {
+    reportDate.setDate(today.getDate() - 1);
+  }
 
+  const formattedDate = reportDate.toISOString().split('T')[0];
   try {
     const response = await axios.get(
       'https://api.clockwork.report/v1/worklogs',

@@ -194,29 +194,36 @@ async function getDaily() {
     }, []);
 
     if(process.env.OPENAI_API_KEY) {
-      const gptResponse = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            "role": "user",
-            "content": [
-              {
-                "type": "text",
-                "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible and keep the original tile of tickets. Add context if necessary: " + JSON.stringify(reducedResponse)
-              }
-            ]
-          }
-        ]
-      });
+      try {
+        const gptResponse = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible and keep the original tile of tickets. Add context if necessary: " + JSON.stringify(reducedResponse)
+                }
+              ]
+            }
+          ]
+        });
 
-      console.log(gptResponse.choices[0].message.content);
-      return;
+        console.log(gptResponse.choices[0].message.content);
+      } catch (error) {
+        console.error('Error getting GPT response:', error.message);
+        console.log('')
+        console.log('Serving raw data from clockwork as fallback:')
+        console.table(reducedResponse);
+      }
+      return
     }
 
     console.table(reducedResponse);
 
     } catch (error) {
-    console.error('Error retrieving worklogs:', error.response);
+    console.error('Error retrieving worklogs:', error);
   }
 }
 

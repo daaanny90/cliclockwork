@@ -147,6 +147,18 @@ async function stopTimer() {
 /**
  * Create a report of the work done yesterday to help during daily meetings 
  */
+const parseTimeSpent = (timeStr) => {
+  const hours = timeStr.match(/(\d+)h/)?.[1] || 0;
+  const minutes = timeStr.match(/(\d+)m/)?.[1] || 0;
+  return parseInt(hours) * 60 + parseInt(minutes);
+};
+
+const formatTimeSpent = (totalMinutes) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}h ${minutes}m`;
+};
+
 async function getDaily() {
   const token = await getToken();
   const name = await getName();
@@ -172,7 +184,6 @@ async function getDaily() {
           starting_at: formattedDate,
           ending_at: formattedDate,
           expand: 'authors,issues,worklogs'
-
         }
       }
     )
@@ -182,16 +193,36 @@ async function getDaily() {
       return regex.test(worklog.author.displayName);
     });
 
-    const reducedResponse = filteredResponse.reduce((worklog, currentWorklog) => {
+    const reducedResponse = filteredResponse.reduce((accumulator, currentWorklog) => {
+      const key = currentWorklog.issue.key;
+      const existingLogIndex = accumulator.findIndex(log => log.issue === key);
+
       const log = {
-        issue: currentWorklog.issue.key,
+        issue: key,
         summary: currentWorklog.issue.fields.summary,
         comment: currentWorklog.comment,
-        timeSpent: currentWorklog.timeSpent,
+        timeSpent: parseTimeSpent(currentWorklog.timeSpent)
       };
-      worklog.push(log);
-      return worklog;
+
+      if (existingLogIndex !== -1) {
+        // Se il ticket esiste già, somma il tempo e aggiungi il commento
+        accumulator[existingLogIndex].timeSpent += log.timeSpent;
+        accumulator[existingLogIndex].comment = 
+          accumulator[existingLogIndex].comment.replace(/\\n/g, ' ') + ' | ' + log.comment.replace(/\\n/g, ' ');
+      } else {
+        // Se il ticket non esiste, aggiungilo all'accumulatore
+        accumulator.push(log);
+      }
+
+      return accumulator;
     }, []);
+
+    // Formatta il tempo e gestisci i commenti
+    const processedResponse = reducedResponse.map(log => ({
+      ...log,
+      timeSpent: formatTimeSpent(log.timeSpent),
+      comment: log.comment.replace(/\\n/g, ' ')
+    }));
 
     if(process.env.OPENAI_API_KEY) {
       try {
@@ -203,7 +234,7 @@ async function getDaily() {
               "content": [
                 {
                   "type": "text",
-                  "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible and keep the original tile of tickets. Add context if necessary: " + JSON.stringify(reducedResponse)
+                  "text": "Write some notes to use in my daily meeting based on these worklogs. Group similar work together if possible and keep the original tile of tickets. Add context if necessary: " + JSON.stringify(processedResponse)
                 }
               ]
             }
@@ -215,14 +246,14 @@ async function getDaily() {
         console.error('Error getting GPT response:', error.message);
         console.log('')
         console.log('Serving raw data from clockwork as fallback:')
-        console.table(reducedResponse);
+        console.table(processedResponse);
       }
       return
     }
 
-    console.table(reducedResponse);
+    console.table(processedResponse);
 
-    } catch (error) {
+  } catch (error) {
     console.error('Error retrieving worklogs:', error);
   }
 }
